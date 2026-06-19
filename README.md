@@ -118,6 +118,4 @@ Tesseract does best on clean, high-contrast printed text. The script already ups
 
 Everything runs locally. Tesseract is fully offline; no image or text is sent anywhere. The captured image stays in the clipboard only until OCR replaces it with text. Note that if you use a clipboard-history manager, the OCR'd text (and possibly the intermediate image) may be stored in its history — exclude this from history if you OCR sensitive material.
 
-## License
 
-MIT — see [LICENSE](LICENSE).
