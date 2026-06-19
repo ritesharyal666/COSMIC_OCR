@@ -43,8 +43,8 @@ sudo apt install wl-clipboard tesseract-ocr tesseract-ocr-eng imagemagick libnot
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/cosmic-ocr.git
-cd cosmic-ocr
+git clone https://github.com/ritesharyal666/COSMIC_OCR.git
+cd COSMIC_OCR
 ./install.sh
 ```
 
@@ -81,7 +81,7 @@ A region-select overlay appears. Drag a box around the text. The recognized text
 
 In **Settings → Keyboard → Keyboard shortcuts → Add custom shortcut**:
 
-- **Command:** `/home/YOUR_USERNAME/.local/bin/ocr-capture` (use the full path; `~` is not reliably expanded)
+- **Command:** `/home/ritesharyal666/.local/bin/ocr-capture` (use the full path; `~` is not reliably expanded)
 - **Key combination:** something `Super`-based, e.g. `Super+Shift+S` (avoid `Ctrl`/`Alt` combos that apps like browsers grab)
 
 If the GUI shortcut doesn't fire, you can write the binding directly to
@@ -93,7 +93,7 @@ If the GUI shortcut doesn't fire, you can write the binding directly to
         modifiers: [Super, Shift],
         key: "s",
         description: Some("OCR Capture"),
-    ): Spawn("/home/YOUR_USERNAME/.local/bin/ocr-capture"),
+    ): Spawn("/home/ritesharyal666/.local/bin/ocr-capture"),
 }
 ```
 
@@ -102,7 +102,6 @@ Log out and back in to be sure COSMIC reloads it.
 ## Configuration
 
 Set the OCR language with the `OCR_LANG` environment variable (default `eng`):
-
 ```bash
 OCR_LANG=deu ocr-capture        # German
 OCR_LANG=eng+fra ocr-capture    # English + French
@@ -117,5 +116,4 @@ Tesseract does best on clean, high-contrast printed text. The script already ups
 ## Privacy
 
 Everything runs locally. Tesseract is fully offline; no image or text is sent anywhere. The captured image stays in the clipboard only until OCR replaces it with text. Note that if you use a clipboard-history manager, the OCR'd text (and possibly the intermediate image) may be stored in its history — exclude this from history if you OCR sensitive material.
-
 
