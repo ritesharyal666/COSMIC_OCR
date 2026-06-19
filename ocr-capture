@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# cosmic-ocr — capture a screen region on COSMIC and OCR it straight to the clipboard.
+#
+# Flow: triggers the COSMIC screenshot portal (configured to copy a rectangle
+# selection to the clipboard as an image), reads that image back out of the
+# clipboard, runs Tesseract on it, and replaces the clipboard contents with the
+# extracted text. The image never touches disk and nothing leaves the machine.
+#
+# Requires: cosmic-screenshot, wl-clipboard, tesseract-ocr, imagemagick
+# Optional: libnotify (notify-send) for desktop notifications
+#
+# See README for the one-time COSMIC portal setting this depends on.
+
+set -euo pipefail
+
+# OCR language(s). Override with: OCR_LANG=deu ocr-capture
+# Multiple: OCR_LANG=eng+deu
+OCR_LANG="${OCR_LANG:-eng}"
+
+# Ensure clipboard tools can reach the Wayland session even under a thin
+# environment (e.g. when spawned by a compositor keyboard shortcut).
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+notify() { command -v notify-send >/dev/null 2>&1 && notify-send "OCR" "$1" || true; }
+
+# Pick the ImageMagick entrypoint: v7 uses `magick`, v6 uses `convert`.
+if command -v magick >/dev/null 2>&1; then
+  IM=(magick)
+elif command -v convert >/dev/null 2>&1; then
+  IM=(convert)
+else
+  notify "ImageMagick not found"
+  echo "error: ImageMagick (magick or convert) is required" >&2
+  exit 1
+fi
+
+# Launch the portal capture. With the COSMIC portal set to
+# save_location: Clipboard + choice: Rectangle, this does a region select
+# straight to the clipboard with no file written.
+cosmic-screenshot --interactive=true >/dev/null 2>&1 || true
+
+# Wait for the image to land on the clipboard (up to ~5s), in case the
+# portal UI takes a moment.
+for _ in $(seq 1 50); do
+  if wl-paste --list-types 2>/dev/null | grep -q "image/png"; then
+    break
+  fi
+  sleep 0.1
+done
+
+if ! wl-paste --list-types 2>/dev/null | grep -q "image/png"; then
+  notify "No capture detected (cancelled?)"
+  exit 0
+fi
+
+# Read the image off the clipboard, upscale + grayscale for accuracy,
+# OCR it, strip the trailing newline, and write the text back.
+TEXT=$(wl-paste --type image/png \
+  | "${IM[@]}" png:- -resize 300% -colorspace Gray png:- \
+  | tesseract --oem 1 --psm 6 -l "$OCR_LANG" stdin stdout 2>/dev/null \
+  | perl -pe 'chomp if eof')
+
+printf '%s' "$TEXT" | wl-copy
+
+if [ -z "$TEXT" ]; then
+  notify "No text recognized"
+else
+  notify "Copied ${#TEXT} characters"
+fi
